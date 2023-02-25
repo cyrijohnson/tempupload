@@ -1,4 +1,4 @@
-export const SERVER_URL = "http://localhost:1337";
+export const SERVER_URL = "http://143.42.109.249:1337";
 
 export const toolbarOptions = [
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
