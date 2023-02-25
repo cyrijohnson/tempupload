@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Handling broken images with the service worker</title>
+
+    <meta name="viewport" content="width=device-width initial-scale=1">
+    <meta name="description" content="">
+    <meta name="flattr:id" content="12dxv3">
+
+    <link rel="icon" href="/favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="https://bitsofco.de/assets/built/global.css?v=2d326f68e4" class="versionedAsset">
+
+    <link rel="manifest" href="https://bitsofco.de/assets/manifest.json?v=2d326f68e4">
+    <meta name="theme-color" content="#ffdb3a">
+
+    <link rel="icon" type="image/png" sizes="32x32" href="https://bitsofco.de/assets/icons/icon_32.png?v=2d326f68e4">
+    <link rel="icon" type="image/png" sizes="48x48" href="https://bitsofco.de/assets/icons/icon_48.png?v=2d326f68e4">
+    <link rel="icon" type="image/png" sizes="128x128" href="https://bitsofco.de/assets/icons/icon_128.png?v=2d326f68e4">
+    <link rel="icon" type="image/png" sizes="256x256" href="https://bitsofco.de/assets/icons/icon_256.png?v=2d326f68e4">
+
+    <meta name="apple-mobile-web-app-title" content="bitsofcode">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://bitsofco.de/assets/icons/icon_152.png?v=2d326f68e4">
+
+    <meta name="msapplication-TileColor" content="#ffdb3a">
+    <meta name="msapplication-TileImage" content="https://bitsofco.de/assets/icons/icon_144.png?v=2d326f68e4">
+
+    <meta property="og:locale" content="en_US">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://bitsofco.de/assets/icons/icon_128.png?v=2d326f68e4">
+    <meta property="og:site_name" content="bitsofcode">
+    <meta property="og:url" content="https://bitsofco.de">
+
+    <!-- Google Analytics -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+        ga('create', 'UA-60256750-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+
+    <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="canonical" href="https://bitsofco.de/handling-broken-images-with-service-worker/" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+    
+    <meta property="og:site_name" content="bitsofcode" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Handling broken images with the service worker" />
+    <meta property="og:description" content="A few years ago, I wrote about how we can use css to style broken images. The technique leveraged on the fact that any styling to the ::before or ::after pseudo-elements on the &amp;lt;img&amp;gt; element will only be applied if the image doesn’t load. So, we could" />
+    <meta property="og:url" content="https://bitsofco.de/handling-broken-images-with-service-worker/" />
+    <meta property="og:image" content="https://bitsofco.de/content/images/2018/12/Screenshot-2018-12-16-at-21.06.29.png" />
+    <meta property="article:published_time" content="2018-12-19T07:49:26.000Z" />
+    <meta property="article:modified_time" content="2018-12-19T07:49:26.000Z" />
+    <meta property="article:tag" content="javascript" />
+    
+    <meta property="article:publisher" content="https://www.facebook.com/bitsofcodeblog" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Handling broken images with the service worker" />
+    <meta name="twitter:description" content="A few years ago, I wrote about how we can use css to style broken images. The technique leveraged on the fact that any styling to the ::before or ::after pseudo-elements on the &amp;lt;img&amp;gt; element will only be applied if the image doesn’t load. So, we could" />
+    <meta name="twitter:url" content="https://bitsofco.de/handling-broken-images-with-service-worker/" />
+    <meta name="twitter:image" content="https://bitsofco.de/content/images/2018/12/Screenshot-2018-12-16-at-21.06.29.png" />
+    <meta name="twitter:label1" content="Written by" />
+    <meta name="twitter:data1" content="Ire Aderinokun" />
+    <meta name="twitter:label2" content="Filed under" />
+    <meta name="twitter:data2" content="javascript" />
+    <meta name="twitter:site" content="@botsofcode" />
+    <meta name="twitter:creator" content="@ireaderinokun" />
+    <meta property="og:image:width" content="339" />
+    <meta property="og:image:height" content="265" />
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "bitsofcode",
+        "url": "https://bitsofco.de/",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://bitsofco.de/content/images/2017/03/icon_256.png",
+            "width": 60,
+            "height": 60
+        }
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Ire Aderinokun",
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://bitsofco.de/content/images/2020/05/Ire_NudeSquare.png",
+            "width": 1000,
+            "height": 1000
+        },
+        "url": "https://bitsofco.de/author/ire/",
+        "sameAs": [
+            "https://ireaderinokun.com",
+            "https://twitter.com/ireaderinokun"
+        ]
+    },
+    "headline": "Handling broken images with the service worker",
+    "url": "https://bitsofco.de/handling-broken-images-with-service-worker/",
+    "datePublished": "2018-12-19T07:49:26.000Z",
+    "dateModified": "2018-12-19T07:49:26.000Z",
+    "image": {
+        "@type": "ImageObject",
+        "url": "https://bitsofco.de/content/images/2018/12/Screenshot-2018-12-16-at-21.06.29.png",
+        "width": 339,
+        "height": 265
+    },
+    "keywords": "javascript",
+    "description": "A few years ago, I wrote about how we can use css to style broken images\n[https://bitsofco.de/styling-broken-images/]. The technique leveraged on the fact that\nany styling to the ::before or ::after pseudo-elements on the &lt;img&gt; element will\nonly be applied if the image doesn’t load. So, we could style those elements and\nthey would only display if the image was broken.\n\nHere’s an example of how I’ve styled broken images on this site:\n\n\n\n\n\nThere are pros and cons to handling broken images this way",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://bitsofco.de/"
+    }
+}
+    </script>
+
+    <meta name="generator" content="Ghost 4.47" />
+    <link rel="alternate" type="application/rss+xml" title="bitsofcode" href="https://bitsofco.de/rss/" />
+    <script defer src="https://unpkg.com/@tryghost/portal@~1.22.0/umd/portal.min.js" data-ghost="https://bitsofco.de/" crossorigin="anonymous"></script><style id="gh-members-styles">.gh-post-upgrade-cta-content,
+.gh-post-upgrade-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    text-align: center;
+    width: 100%;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.gh-post-upgrade-cta-content {
+    border-radius: 8px;
+    padding: 40px 4vw;
+}
+
+.gh-post-upgrade-cta h2 {
+    color: #ffffff;
+    font-size: 28px;
+    letter-spacing: -0.2px;
+    margin: 0;
+    padding: 0;
+}
+
+.gh-post-upgrade-cta p {
+    margin: 20px 0 0;
+    padding: 0;
+}
+
+.gh-post-upgrade-cta small {
+    font-size: 16px;
+    letter-spacing: -0.2px;
+}
+
+.gh-post-upgrade-cta a {
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: none;
+    text-decoration: underline;
+}
+
+.gh-post-upgrade-cta a:hover {
+    color: #ffffff;
+    opacity: 0.8;
+    box-shadow: none;
+    text-decoration: underline;
+}
+
+.gh-post-upgrade-cta a.gh-btn {
+    display: block;
+    background: #ffffff;
+    text-decoration: none;
+    margin: 28px 0 0;
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.gh-post-upgrade-cta a.gh-btn:hover {
+    opacity: 0.92;
+}</style>
+    <script defer src="/public/cards.min.js?v=2d326f68e4"></script>
+    <link rel="stylesheet" type="text/css" href="/public/cards.min.css?v=2d326f68e4">
+    <style>
+
+    .post__content .code-addendum, 
+    .post__content .code-result {
+    	margin-top: -2em;
+    }
+</style>
+<style>:root {--ghost-accent-color: #15171A;}</style>
+</head>
+<body class="post-template tag-javascript">
+
+<header class="site__header">
+    <div class="wrapper wrapper--flex">
+        <a href="#site__footer__nav" class="anchorButton no-btn site__nav__open">
+            <span class="sr-only">Open Site Navigation</span>
+            <svg width="14" height="10" viewbox="0 0 14 10" class="fill" fill="#3C3C3C" aria-hidden="true">
+    <rect width="14" height="2"/>
+    <rect width="14" height="2" y="4"/>
+    <rect width="14" height="2" y="8"/>
+</svg>        </a>
+        <h1 class="site__title">
+            <a href="/" class="no-ul">
+                <span class="sr-only">bitsofcode</span>
+                <svg id="logo" width="94px" height="15px" viewBox="0 0 94 15" aria-hidden="true">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g class="fill" fill-rule="nonzero" fill="#3C3C3C">
+
+            <!-- B itsofcode -->
+            <path class="logo-letter-b logo-placement-1 logo-section-left" d="M8.39551451,4.83471074 C7.58944591,4.33884298 6.68416887,4.10330579 5.67968338,4.10330579 C4.30316623,4.10330579 3.16226913,4.54958678 2.25699208,5.45454545 L2.25699208,2.15702479 L2.25699208,0.917355372 C2.25699208,0.384297521 1.99656992,0.123966942 1.46332454,0.123966942 L0.793667546,0.123966942 C0.260422164,0.123966942 0,0.384297521 0,0.917355372 L0,13.8471074 C0,14.3801653 0.260422164,14.6404959 0.793667546,14.6404959 L1.46332454,14.6404959 C1.99656992,14.6404959 2.25699208,14.3801653 2.25699208,13.8471074 L2.25699208,13.5247934 C3.16226913,14.4297521 4.30316623,14.8760331 5.67968338,14.8760331 C6.67176781,14.8760331 7.57704485,14.6280992 8.39551451,14.1446281 C9.20158311,13.6487603 9.83403694,13.0041322 10.2804749,12.1735537 C10.7269129,11.3553719 10.9501319,10.4628099 10.9501319,9.48347107 C10.9501319,8.51652893 10.7269129,7.62396694 10.2804749,6.79338843 C9.84643799,5.98760331 9.21398417,5.33057851 8.39551451,4.83471074 Z M7.6762533,11.8760331 C7.03139842,12.5206612 6.22532982,12.8553719 5.2828496,12.8553719 C4.62559367,12.8553719 4.01794195,12.6942149 3.47229551,12.3595041 C2.92664908,12.0247934 2.5298153,11.5785124 2.25699208,11.0082645 L2.25699208,7.99586777 C2.5298153,7.43801653 2.93905013,6.97933884 3.48469657,6.6446281 C4.03034301,6.29752066 4.62559367,6.13636364 5.2828496,6.13636364 C6.22532982,6.13636364 7.01899736,6.45867769 7.6762533,7.11570248 C8.32110818,7.76033058 8.65593668,8.5661157 8.65593668,9.49586777 C8.65593668,10.4380165 8.33350923,11.231405 7.6762533,11.8760331 Z"></path>
+
+            <!-- b I tsofcode -->
+            <path class="logo-letter-i logo-placement-2 logo-section-left" d="M13.8643799,4.33884298 L13.1823219,4.33884298 C12.6490765,4.33884298 12.3886544,4.59917355 12.3886544,5.1322314 L12.3886544,13.8471074 C12.3886544,14.3801653 12.6490765,14.6404959 13.1823219,14.6404959 L13.8643799,14.6404959 C14.3976253,14.6404959 14.6580475,14.3801653 14.6580475,13.8471074 L14.6580475,5.1322314 C14.6580475,4.59917355 14.3976253,4.33884298 13.8643799,4.33884298 Z"></path>
+
+            <!-- bi T sofcode -->
+            <path class="logo-letter-t logo-placement-3 logo-section-left" d="M20.9453826,12.9049587 C20.9329815,12.892562 20.9329815,12.8677686 20.9205805,12.8553719 C20.8585752,12.7933884 20.7965699,12.7438017 20.7097625,12.7066116 L20.7097625,12.7066116 C20.6229551,12.6694215 20.5237467,12.6570248 20.4121372,12.6446281 L20.4121372,12.6446281 C20.4121372,12.6322314 20.362533,12.6322314 20.3005277,12.6322314 L20.2881266,12.6322314 C20.0773087,12.6322314 19.6804749,12.6570248 19.6432718,12.6570248 C19.3704485,12.6570248 19.0852243,12.6446281 18.8496042,12.4834711 C18.353562,12.1363636 18.3783641,11.553719 18.3783641,11.0082645 L18.3783641,10.9586777 L18.3783641,9.68181818 L18.3783641,9.26033058 L18.3783641,6.33471074 L20.1889182,6.33471074 C20.7221636,6.33471074 20.9825858,6.07438017 20.9825858,5.54132231 L20.9825858,5.1446281 C20.9825858,4.61157025 20.7221636,4.35123967 20.1889182,4.35123967 L18.3783641,4.35123967 L18.3783641,2.19421488 C18.3783641,1.9338843 18.3039578,1.7231405 18.1675462,1.58677686 C18.0311346,1.45041322 17.8203166,1.40082645 17.5598945,1.42561983 L16.8778364,1.48760331 C16.3693931,1.52479339 16.121372,1.80991736 16.121372,2.31818182 L16.121372,4.33884298 L16.121372,6.32231405 L16.121372,6.99173554 L16.121372,9.24793388 L16.121372,10.5495868 C16.121372,11.3057851 16.0841689,12.0867769 16.3073879,12.8181818 C16.4437995,13.2892562 16.6918206,13.7231405 17.0638522,14.0578512 C17.907124,14.7768595 18.9984169,14.6280992 20.0153034,14.6280992 L20.2013193,14.6280992 C20.2633245,14.6280992 20.3377309,14.6280992 20.4121372,14.6157025 L20.4245383,14.6157025 C20.4741425,14.6157025 20.5113456,14.6157025 20.5733509,14.6033058 C20.9329815,14.5785124 21.1189974,14.3057851 21.1189974,13.785124 L21.1189974,13.4132231 C21.1189974,13.2892562 21.1065963,13.177686 21.0693931,13.0909091 C21.0197889,13.0165289 20.9825858,12.9669421 20.9453826,12.9049587 Z"></path>
+
+            <!-- bit S ofcode -->
+            <path class="logo-letter-s logo-placement-4 logo-section-left" class="logo__letter-s" d="M26.7366755,8.45454545 C25.521372,8.20661157 24.9013193,7.73553719 24.9013193,7.04132231 C24.9013193,6.73140496 25.0501319,6.49586777 25.3353562,6.30991736 C25.6205805,6.13636364 25.9926121,6.03719008 26.4390501,6.03719008 C26.9350923,6.03719008 27.4435356,6.2107438 27.976781,6.54545455 C28.423219,6.84297521 28.7952507,6.79338843 29.105277,6.39669421 L29.328496,6.11157025 C29.4897098,5.91322314 29.5641161,5.71487603 29.551715,5.50413223 C29.539314,5.30578512 29.4153034,5.1322314 29.2044855,4.99586777 C28.2992084,4.38842975 27.3195251,4.09090909 26.2654354,4.09090909 C25.1741425,4.09090909 24.2936675,4.36363636 23.6364116,4.90909091 C22.9791557,5.45454545 22.6443272,6.14876033 22.6443272,6.99173554 C22.6443272,7.85950413 22.9171504,8.55371901 23.4627968,9.08677686 C24.0084433,9.61983471 24.851715,10.0041322 26.0050132,10.2272727 C26.7242744,10.3760331 27.2327177,10.5619835 27.530343,10.785124 C27.8279683,11.0082645 27.976781,11.3057851 27.976781,11.677686 C27.976781,12.0495868 27.8155673,12.3595041 27.4931398,12.5826446 C27.1707124,12.8057851 26.7490765,12.9173554 26.2034301,12.9173554 C25.4469657,12.9173554 24.7525066,12.6818182 24.1200528,12.1983471 C23.6860158,11.8636364 23.3139842,11.8760331 23.0039578,12.2603306 L22.7435356,12.5702479 C22.3963061,12.9917355 22.4211082,13.3636364 22.7931398,13.6859504 C23.7480211,14.4793388 24.9385224,14.8636364 26.3522427,14.8636364 C27.5427441,14.8636364 28.4852243,14.5661157 29.1920844,13.9834711 C29.8865435,13.4008264 30.2337731,12.6446281 30.2337731,11.7272727 C30.2337731,10.8471074 29.9485488,10.1404959 29.3905013,9.60743802 C28.8200528,9.08677686 27.9395778,8.70247934 26.7366755,8.45454545 Z"></path>
+
+
+            <!-- bits O fcode (opening) -->
+            <path class="logo-letter-o-opening logo-placement-5 logo-section-left" d="M35.3182058,14.6652893 C35.2313984,14.6652893 35.13219,14.6528926 35.0453826,14.6280992 C32.7015831,14.0206612 31.0770449,11.9008264 31.0770449,9.48347107 C31.0770449,7.0661157 32.7139842,4.94628099 35.0453826,4.33884298 C35.6406332,4.19008264 36.2358839,4.53719008 36.3846966,5.11983471 C36.5335092,5.70247934 36.1862797,6.30991736 35.6034301,6.45867769 C34.2269129,6.81818182 33.2720317,8.05785124 33.2720317,9.48347107 C33.2720317,10.9090909 34.2269129,12.1487603 35.6034301,12.5082645 C36.1862797,12.6570248 36.5459103,13.2644628 36.3846966,13.8471074 C36.248285,14.3429752 35.801847,14.6652893 35.3182058,14.6652893 Z"></path>
+
+            <!-- bits O fcode (closing) -->
+            <path class="logo-letter-o-closing logo-placement-6 logo-section-middle" d="M38.0712401,14.6280992 C37.5875989,14.6280992 37.1411609,14.3057851 37.0171504,13.8099174 C36.8683377,13.2272727 37.2155673,12.6322314 37.7984169,12.4710744 C39.174934,12.1115702 40.1298153,10.8719008 40.1298153,9.44628099 C40.1298153,8.02066116 39.174934,6.78099174 37.7984169,6.4214876 C37.2155673,6.27272727 36.8559367,5.66528926 37.0171504,5.08264463 C37.1659631,4.5 37.7612137,4.15289256 38.3564644,4.30165289 C40.7002639,4.90909091 42.3248021,7.02892562 42.3248021,9.44628099 C42.3248021,11.8636364 40.6878628,13.9834711 38.3564644,14.5909091 C38.2572559,14.6157025 38.1580475,14.6280992 38.0712401,14.6280992 Z"></path>
+
+            <!-- bitso F code -->
+            <path class="logo-letter-f logo-placement-7 logo-section-middle" d="M46.1567282,2.26859504 C46.3799472,2.10743802 46.6775726,2.09504132 46.9503958,2.09504132 C46.9875989,2.09504132 47.3844327,2.11983471 47.5952507,2.11983471 L47.6076517,2.11983471 C47.669657,2.11983471 47.7192612,2.11983471 47.7192612,2.10743802 L47.7192612,2.10743802 C47.8308707,2.09504132 47.9300792,2.08264463 48.0168865,2.04545455 L48.0168865,2.04545455 C48.1036939,2.00826446 48.1656992,1.95867769 48.2277045,1.89669421 C48.2401055,1.88429752 48.2525066,1.85950413 48.2525066,1.84710744 C48.2897098,1.79752066 48.3269129,1.73553719 48.351715,1.66115702 C48.3765172,1.56198347 48.4013193,1.46280992 48.4013193,1.33884298 L48.4013193,0.966942149 C48.4013193,0.446280992 48.2153034,0.173553719 47.8556728,0.148760331 C47.8060686,0.148760331 47.7564644,0.148760331 47.7068602,0.136363636 L47.6944591,0.136363636 C47.6200528,0.136363636 47.5456464,0.123966942 47.4836412,0.123966942 L47.2976253,0.123966942 C46.2683377,0.123966942 45.1770449,-0.0247933884 44.3461741,0.694214876 C43.9617414,1.01652893 43.7261214,1.45041322 43.5897098,1.9338843 C43.3788918,2.66528926 43.4036939,3.44628099 43.4036939,4.20247934 L43.4036939,5.50413223 L43.4036939,9.06198347 L43.4036939,9.73140496 L43.4036939,11.714876 L43.4036939,13.7355372 C43.4036939,14.2561983 43.651715,14.5289256 44.1601583,14.5661157 L44.8422164,14.6280992 C45.1026385,14.6528926 45.3134565,14.6033058 45.4498681,14.4669421 C45.5862797,14.3305785 45.660686,14.1322314 45.660686,13.8595041 L45.660686,6.29752066 L47.4960422,6.29752066 C48.0292876,6.29752066 48.2897098,6.03719008 48.2897098,5.50413223 L48.2897098,5.10743802 C48.2897098,4.57438017 48.0292876,4.31404959 47.4960422,4.31404959 L45.6854881,4.31404959 L45.6854881,3.79338843 L45.6854881,3.74380165 C45.6854881,3.2107438 45.660686,2.62809917 46.1567282,2.26859504 Z"></path>
+
+            <!-- bitsof C ode -->
+            <path class="logo-letter-c logo-placement-8 logo-section-middle" d="M57.6525066,12.3471074 C57.3548813,11.9752066 56.9828496,11.9380165 56.5364116,12.2231405 C55.8915567,12.6446281 55.2094987,12.8553719 54.5026385,12.8553719 C53.5601583,12.8553719 52.7664908,12.5330579 52.1092348,11.8760331 C51.4643799,11.231405 51.1295515,10.4256198 51.1295515,9.48347107 C51.1295515,8.54132231 51.4519789,7.74793388 52.1092348,7.10330579 C52.7540897,6.45867769 53.5601583,6.12396694 54.5026385,6.12396694 C55.1474934,6.12396694 55.8047493,6.32231405 56.4496042,6.70661157 C56.8960422,6.97933884 57.2680739,6.91735537 57.5532982,6.49586777 L57.8509235,6.04958678 C58.1485488,5.59090909 58.0741425,5.23140496 57.6401055,4.95867769 C56.7224274,4.37603306 55.6683377,4.09090909 54.5026385,4.09090909 C53.4361478,4.09090909 52.4688654,4.32644628 51.6007916,4.80991736 C50.7327177,5.29338843 50.0506596,5.93801653 49.5670185,6.76859504 C49.0833773,7.59917355 48.8353562,8.50413223 48.8353562,9.48347107 C48.8353562,10.4752066 49.0833773,11.3801653 49.5670185,12.1983471 C50.0506596,13.0289256 50.7327177,13.6735537 51.6007916,14.1570248 C52.4688654,14.6404959 53.4361478,14.8760331 54.5026385,14.8760331 C55.8047493,14.8760331 56.9456464,14.5289256 57.9377309,13.8347107 C58.3097625,13.5619835 58.3221636,13.2024793 57.9873351,12.768595 L57.6525066,12.3471074 Z"></path>
+
+            <!-- bitsofc O de (opening) -->
+            <path class="logo-letter-o-opening logo-placement-9 logo-section-middle" d="M62.5013193,14.6280992 C62.4145119,14.6280992 62.3153034,14.6157025 62.228496,14.5909091 C59.8846966,13.9834711 58.2601583,11.8636364 58.2601583,9.44628099 C58.2601583,7.02892562 59.8970976,4.90909091 62.228496,4.30165289 C62.8113456,4.15289256 63.4189974,4.5 63.56781,5.08264463 C63.7166227,5.66528926 63.3693931,6.27272727 62.7865435,6.4214876 C61.4100264,6.78099174 60.4551451,8.02066116 60.4551451,9.44628099 C60.4551451,10.8719008 61.4100264,12.1115702 62.7865435,12.4710744 C63.3693931,12.6198347 63.7290237,13.2272727 63.56781,13.8099174 C63.4437995,14.3057851 62.9973615,14.6280992 62.5013193,14.6280992 Z"></path>
+
+            <!-- bitsofc O de (closing) -->
+            <path class="logo-letter-o-closing logo-placement-10 logo-section-right" d="M65.2791557,14.6280992 C64.7955145,14.6280992 64.3490765,14.3057851 64.225066,13.8099174 C64.0762533,13.2272727 64.4234828,12.6322314 65.0063325,12.4710744 C66.3828496,12.1115702 67.3377309,10.8719008 67.3377309,9.44628099 C67.3377309,8.02066116 66.3828496,6.78099174 65.0063325,6.4214876 C64.4234828,6.27272727 64.0638522,5.66528926 64.225066,5.08264463 C64.3738786,4.5 64.9691293,4.15289256 65.5643799,4.30165289 C67.9081794,4.90909091 69.5327177,7.02892562 69.5327177,9.44628099 C69.5327177,11.8636364 67.8957784,13.9834711 65.5643799,14.5909091 C65.4651715,14.6157025 65.3659631,14.6280992 65.2791557,14.6280992 Z"></path>
+
+            <!-- bitsofco D e -->
+            <path class="logo-letter-d logo-placement-11 logo-section-right" d="M80.8176781,0.123966942 L80.1356201,0.123966942 C79.6023747,0.123966942 79.3419525,0.384297521 79.3419525,0.917355372 L79.3419525,5.45454545 C78.4366755,4.54958678 77.2957784,4.10330579 75.9192612,4.10330579 C74.9271768,4.10330579 74.0218997,4.35123967 73.2034301,4.83471074 C72.3849604,5.33057851 71.7649077,5.98760331 71.3184697,6.80578512 C70.8720317,7.62396694 70.6488127,8.51652893 70.6488127,9.49586777 C70.6488127,10.4628099 70.8720317,11.3553719 71.3184697,12.1859504 C71.7649077,13.0041322 72.3973615,13.661157 73.2034301,14.1570248 C74.0094987,14.6528926 74.9147757,14.8884298 75.9192612,14.8884298 C77.2957784,14.8884298 78.4366755,14.4421488 79.3419525,13.5371901 L79.3419525,13.8595041 C79.3419525,14.392562 79.6023747,14.6528926 80.1356201,14.6528926 L80.8176781,14.6528926 C81.3509235,14.6528926 81.6113456,14.392562 81.6113456,13.8595041 L81.6113456,0.917355372 C81.6113456,0.384297521 81.3509235,0.123966942 80.8176781,0.123966942 Z M79.3419525,10.9958678 C79.0691293,11.5661157 78.6598945,12.0123967 78.1266491,12.3471074 C77.5810026,12.6818182 76.985752,12.8429752 76.316095,12.8429752 C75.3736148,12.8429752 74.5799472,12.5206612 73.9226913,11.8636364 C73.2778364,11.2190083 72.9430079,10.4132231 72.9430079,9.47107438 C72.9430079,8.52892562 73.2654354,7.73553719 73.9226913,7.09090909 C74.5675462,6.44628099 75.3736148,6.11157025 76.316095,6.11157025 C76.9733509,6.11157025 77.5686016,6.28512397 78.114248,6.61983471 C78.6598945,6.96694215 79.0691293,7.41322314 79.3419525,7.97107438 L79.3419525,10.9958678 Z"></path>
+
+            <!-- bitsofcod E -->
+            <path class="logo-letter-e logo-placement-12 logo-section-right" d="M91.3585752,4.80991736 C90.5401055,4.33884298 89.6100264,4.10330579 88.5931398,4.10330579 C87.8118734,4.10330579 87.0802111,4.23966942 86.385752,4.52479339 C85.6912929,4.80991736 85.1084433,5.18181818 84.6248021,5.66528926 C84.1411609,6.14876033 83.7567282,6.71900826 83.471504,7.37603306 C83.1862797,8.03305785 83.0498681,8.73966942 83.0498681,9.48347107 C83.0498681,10.2272727 83.1862797,10.9214876 83.471504,11.5909091 C83.7443272,12.2479339 84.1287599,12.8181818 84.6248021,13.3016529 C85.1208443,13.785124 85.716095,14.1694215 86.4353562,14.4545455 C87.1546174,14.7396694 87.9234828,14.8760331 88.7667546,14.8760331 C90.3168865,14.8760331 91.6313984,14.4421488 92.7226913,13.5743802 C93.1319261,13.2272727 93.1319261,12.8429752 92.7102902,12.446281 L92.3258575,12.0743802 C91.978628,11.7520661 91.6065963,11.7520661 91.1973615,12.0619835 C90.428496,12.6322314 89.5976253,12.9173554 88.7047493,12.9173554 C87.8614776,12.9173554 87.1174142,12.6694215 86.4973615,12.161157 C85.8773087,11.6528926 85.505277,11.0082645 85.3688654,10.214876 L93.107124,10.214876 C93.3551451,10.214876 93.5659631,10.1528926 93.7147757,10.0289256 C93.8635884,9.90495868 93.9379947,9.71900826 93.9503958,9.48347107 C93.9627968,9.4338843 93.9627968,9.37190083 93.9627968,9.28512397 C93.9627968,8.34297521 93.7395778,7.47520661 93.2807388,6.69421488 C92.8218997,5.91322314 92.1894459,5.28099174 91.3585752,4.80991736 Z M85.4556728,8.3553719 C85.6664908,7.68595041 86.0633245,7.12809917 86.6461741,6.69421488 C87.2290237,6.26033058 87.8738786,6.04958678 88.5931398,6.04958678 C89.3248021,6.04958678 89.9572559,6.26033058 90.4905013,6.69421488 C91.0237467,7.12809917 91.3833773,7.67355372 91.5693931,8.3553719 L85.4556728,8.3553719 Z"></path>
+
+        </g>
+    </g>
+</svg>            </a>
+        </h1>
+        <a href="/search/" class="site__search__open">
+            <span class="sr-only">Open Site Search</span>
+            <svg width="12px" height="12px" viewBox="0 0 12 12">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g class="fill" transform="translate(-1089.000000, -28.000000)" fill="#3C3C3C">
+            <g transform="translate(0.000000, 24.000000)">
+                <path d="M1100.8061,14.9012567 L1098.60862,12.7037702 C1099.36266,11.7342908 1099.77199,10.5709156 1099.77199,9.38599641 C1099.77199,6.41292639 1097.35907,4 1094.386,4 C1091.41293,4 1089,6.41292639 1089,9.38599641 C1089,12.3590664 1091.41293,14.7719928 1094.386,14.7719928 C1095.59246,14.7719928 1096.77738,14.3626571 1097.70377,13.6086176 L1099.90126,15.8061041 C1100.03052,15.935368 1100.18133,16 1100.35368,16 C1100.52603,16 1100.67684,15.935368 1100.8061,15.8061041 C1101.06463,15.5475763 1101.06463,15.1597846 1100.8061,14.9012567 Z M1098.47935,9.40754039 C1098.47935,11.6696589 1096.64811,13.5008977 1094.386,13.5008977 C1092.12388,13.5008977 1090.29264,11.6696589 1090.29264,9.40754039 C1090.29264,7.1454219 1092.12388,5.31418312 1094.386,5.31418312 C1096.64811,5.31418312 1098.47935,7.1454219 1098.47935,9.40754039 Z"></path>
+            </g>
+        </g>
+    </g>
+</svg>        </a>
+    </div>
+</header>
+
+<div class="dialog dialog--nav" aria-hidden="true">
+    <nav class="site__nav">
+
+        <a href="/" class="anchorButton no-btn focus--theme site__nav__close">
+            <span class="sr-only">Close Navigation</span>
+            <svg width="16px" height="16px" viewBox="0 0 16 16">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g class="fill" transform="translate(-1045.000000, -29.000000)" fill="#3C3C3C">
+            <path d="M1054.19239,36.7781746 L1059.85504,31.1155243 C1060.2344,30.7361632 1060.23977,30.0976311 1059.84924,29.7071068 C1059.456,29.3138598 1058.82815,29.3139875 1058.44082,29.7013107 L1052.77817,35.363961 L1047.11552,29.7013107 C1046.73616,29.3219497 1046.09763,29.3165825 1045.70711,29.7071068 C1045.31386,30.1003537 1045.31399,30.7282011 1045.70131,31.1155243 L1051.36396,36.7781746 L1045.70131,42.4408249 C1045.32195,42.820186 1045.31658,43.4587181 1045.70711,43.8492424 C1046.10035,44.2424894 1046.7282,44.2423617 1047.11552,43.8550385 L1052.77817,38.1923882 L1058.44082,43.8550385 C1058.82019,44.2343995 1059.45872,44.2397667 1059.84924,43.8492424 C1060.24249,43.4559954 1060.24236,42.8281481 1059.85504,42.4408249 L1054.19239,36.7781746 Z"></path>
+        </g>
+    </g>
+</svg>        </a>
+
+        <ul class="nav">
+    <li class="nav-home"><a href="https://bitsofco.de/">Home</a></li>
+    <li class="nav-your-saved-articles"><a href="https://bitsofco.de/saved/">Your Saved Articles</a></li>
+    <li class="nav-subscribe"><a href="https://bitsofco.de/subscribe/">Subscribe</a></li>
+    <li class="nav-other-writing"><a href="https://bitsofco.de/other-writing/">Other Writing</a></li>
+</ul>
+
+
+    </nav>
+</div>
+
+
+
+
+<div class="site__body">
+    <div class="wrapper wrapper--flex">
+        <main class="site__main"><article class="post post-full post tag-javascript">
+    <header class="post__header m-b-lg">
+        <h1 class="post__title h1">Handling broken images with the service worker</h1>
+        <div class="post__meta">
+            <button hidden type="button" id="save">
+                <span class="icon" aria-hidden="true"><svg width="16px" height="16px" viewBox="0 0 100 100">
+ <path d="m11.109 11.129c0-3.0781 2.5-5.5742 5.5938-5.5742h66.594c3.0859 0 5.5938 2.4453 5.5938 5.5742v80.172c0 3.0781-1.9844 4.0391-4.3867 2.1758l-30.117-23.352c-2.4219-1.8789-6.3672-1.8633-8.7734 0l-30.117 23.352c-2.4219 1.8789-4.3867 0.95703-4.3867-2.1758z" fill-rule="evenodd"/>
+</svg></span>
+                <span class="label">Save Article for Offline</span>
+            </button>
+            <em class="post__meta__date">Dec 19, 2018</em>
+                <em class="post__meta__tags"><a href="/tag/javascript/">javascript</a></em>
+        </div>
+    </header>
+
+    <div class="post__content p-b-xlg m-b-lg">
+        <!--kg-card-begin: markdown--><p>A few years ago, I wrote about how we can use css to <a href="https://bitsofco.de/styling-broken-images/">style broken images</a>. The technique leveraged on the fact that any styling to the <code>::before</code> or <code>::after</code> pseudo-elements on the <code>&lt;img&gt;</code> element will only be applied if the image doesn’t load. So, we could style those elements and they would only display if the image was broken.</p>
+<p>Here’s an example of how I’ve styled broken images on this site:</p>
+<div class="email-hide">
+<p><img src="/blah.png" alt="Broken image" loading="lazy"></p>
+</div>
+<div class="email-display">
+<p><img src="/content/images/2018/12/Screenshot-2018-12-16-at-21.08.32.png" alt="Broken image" loading="lazy"></p>
+</div>
+<p>There are pros and cons to handling broken images this way. One limitation is browser support, as this technique doesn’t work in some major browsers like Safari.</p>
+<p>Having recently done a lot of work with service workers, it occurred to me that we could use the service worker to handle broken images in a different way. Since the service worker can tell if an image file isn’t able to be fetched, we can handle that condition by, for example, serving a different image to the browser.</p>
+<h2 id="interceptingrequestsforbrokenimages">Intercepting requests for broken images</h2>
+<p>In the service worker <code>fetch</code> event, we can tell if and when a request the browser makes goes wrong, whether that be because the user is offline or because the response to the fetch request was bad.</p>
+<pre><code class="language-js">self.addEventListener('fetch', (e) =&gt; {
+    e.respondWith(
+        fetch(e.request)
+            .then((response) =&gt; {
+                if (response.ok) return response;
+                
+                // User is online, but response was not ok
+
+            })
+            .catch((err) =&gt; {
+
+                // User is probably offline
+
+            })
+    )
+});
+</code></pre>
+<p>In either of these scenarios, we can check to see if the failed request was for an image and do whatever we like in response.</p>
+<pre><code class="language-js">function isImage(fetchRequest) {
+    return fetchRequest.method === &quot;GET&quot; 
+           &amp;&amp; fetchRequest.destination === &quot;image&quot;;
+}
+
+self.addEventListener('fetch', (e) =&gt; {
+    e.respondWith(
+        fetch(e.request)
+            .then((response) =&gt; {
+                if (response.ok) return response;
+                
+                // User is online, but response was not ok
+                if (isImage(e.request)) {
+                    // do something
+                }
+
+            })
+            .catch((err) =&gt; {
+
+                // User is probably offline
+                if (isImage(e.request)) {
+                    // do something
+                }
+
+            })
+    )
+});
+</code></pre>
+<h2 id="servingabrokenimageimage">Serving a “broken image” image</h2>
+<p>One way to handle requests for images that don’t resolve would be to send a placeholder image in its place. For example, we can have an image like the one below to show the user that the image is broken.</p>
+<p>
+    <img src="https://bitsofco.de/content/images/2018/12/broken-1.png" alt="Broken image icon with text below that says 'image nto found'" class="d-ib">
+</p>
+<p>We can implement this by responding to the <code>fetch</code> request with a new request for the palceholder file, <code>/broken.png</code>.</p>
+<pre><code class="language-js">self.addEventListener('fetch', (e) =&gt; {
+    e.respondWith(
+        fetch(e.request)
+            .then((response) =&gt; {
+                if (response.ok) return response;
+                
+                // User is online, but response was not ok
+                if (isImage(e.request)) {
+                    // Fetch the broken image placeholder instead
+                    return fetch(&quot;/broken.png&quot;);
+                }
+
+            })
+            .catch((err) =&gt; {
+
+                // User is probably offline
+                if (isImage(e.request)) {
+                    // do something
+                }
+
+            }) // end fetch
+    )
+});
+</code></pre>
+<p>This will work when the user is online, but if we want this to also work offline, we will need to cache the placeholder image. This is typically done during the <code>install</code> phase of the service worker lifecycle.</p>
+<pre><code class="language-js">self.addEventListener('install', (e) =&gt; {
+    self.skipWaiting();
+    e.waitUntil(
+        caches.open(&quot;precache&quot;).then((cache) =&gt; {
+        
+            // Add /broken.png to &quot;precache&quot;
+            cache.add(&quot;/broken.png&quot;);
+            
+        })
+    );
+});
+</code></pre>
+<p>Once the image is in the cache, we can respond to the <code>fetch</code> request with a response from the cache instead of having to make a new request over the network.</p>
+<pre><code class="language-js">self.addEventListener('fetch', (e) =&gt; {
+    e.respondWith(
+        fetch(e.request)
+            .then((response) =&gt; {
+                if (response.ok) return response;
+                
+                // User is online, but response was not ok
+                if (isImage(e.request)) {
+                    // Get broken image placeholder from cache
+                    return caches.match(&quot;/broken.png&quot;);
+                }
+
+            })
+            .catch((err) =&gt; {
+
+                // User is probably offline
+                if (isImage(e.request)) {
+                    // Get broken image placeholder from cache
+                    return caches.match(&quot;/broken.png&quot;);
+                }
+
+            })
+    )
+});
+</code></pre>
+<p>I created a <a href="https://gist.github.com/ireade/128adedc16bf1bd1de98397d437c339d">GitHub Gist</a> with the full implementation in case you want to use it in your own projects.</p>
+<!--kg-card-end: markdown-->
+    </div>
+
+    <footer class="post__footer p-b-md m-b-lg">
+        <ul class="post__share">
+    <li class="m-r-sm">
+        <a href="https://twitter.com/intent/tweet/?text='Handling broken images with the service worker'%20from%20bitsofco.de&url=https://bitsofco.de/handling-broken-images-with-service-worker/&via=ireaderinokun" target="_blank" class="post__share__item">
+            <span class="sr-only">Share the Article on Twitter</span>
+            <svg width="19px" height="15px" viewBox="0 0 19 15">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g class="fill" fill-rule="nonzero" fill="#3C3C3C">
+            <path d="M18.9999991,1.77490775 C18.3009891,2.07601476 17.5496341,2.27942804 16.7612291,2.37094096 C17.5658791,1.90249077 18.1840441,1.16070111 18.4751241,0.276752768 C17.7218691,0.710608856 16.8876741,1.02555351 15.9997091,1.1952952 C15.2887291,0.459594096 14.2756491,0 13.1544591,0 C11.0017591,0 9.25634305,1.6947417 9.25634305,3.7851476 C9.25634305,4.08182657 9.29080905,4.37075646 9.35728055,4.64778598 C6.11762855,4.48994465 3.24528455,2.98293358 1.32276005,0.692804428 C0.98718205,1.25184502 0.7949562,1.90212177 0.7949562,2.59584871 C0.7949562,3.90913284 1.48311055,5.06771218 2.52911755,5.74649446 C1.89012855,5.72684502 1.28903505,5.55654982 0.7635245,5.27306273 C0.763154,5.28883764 0.763154,5.30461255 0.763154,5.32066421 C0.763154,7.15464022 2.1068435,8.68445572 3.8900315,9.03230627 C3.5629845,9.11879151 3.2186095,9.16510148 2.8631005,9.16510148 C2.611911,9.16510148 2.367723,9.14131919 2.129672,9.0971679 C2.6257145,10.6009317 4.065297,11.6954059 5.77106,11.725821 C4.4369845,12.7411531 2.7562255,13.3463007 0.9298866,13.3463007 C0.61523615,13.3463007 0.30492815,13.328321 0,13.2933672 C1.725067,14.3673303 3.774065,14.9940959 5.975386,14.9940959 C13.14534,14.9940959 17.066275,9.22621771 17.066275,4.22407749 C17.066275,4.0599631 17.06238,3.89677122 17.054875,3.73440959 C17.8165841,3.20064576 18.4774041,2.53404059 18.9999991,1.77490775"></path>
+        </g>
+    </g>
+</svg>        </a>
+    </li>
+
+    <li class="m-r-sm">
+        <a href="https://www.facebook.com/sharer/sharer.php?u=https://bitsofco.de/handling-broken-images-with-service-worker/" target="_blank" class="post__share__item">
+            <span class="sr-only">Share the Article on Facebook</span>
+            <svg width="15px" height="15px" viewBox="0 0 15 15">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(-162.000000, -200.000000)" fill-rule="nonzero">
+            <g transform="translate(126.000000, 127.000000)">
+                <g transform="translate(3.000000, 73.000000)">
+                    <g transform="translate(33.000000, 0.000000)">
+                        <path d="M14.1360232,14.9598649 C14.590888,14.9598649 14.959749,14.5910039 14.959749,14.1360232 L14.959749,0.857837838 C14.959749,0.402799228 14.5909459,0.0340540541 14.1360232,0.0340540541 L0.857837838,0.0340540541 C0.402799228,0.0340540541 0.0340540541,0.402799228 0.0340540541,0.857837838 L0.0340540541,14.1360232 C0.0340540541,14.5909459 0.402741313,14.9598649 0.857837838,14.9598649 L14.1360232,14.9598649 Z" class="fill" fill="#3C3C3C"></path>
+                        <path d="M10.3325676,14.9598649 L10.3325676,9.17976834 L12.2726641,9.17976834 L12.563166,6.92716216 L10.3325676,6.92716216 L10.3325676,5.48901544 C10.3325676,4.83683398 10.513668,4.39239382 11.4488803,4.39239382 L12.6416988,4.39187259 L12.6416988,2.37712355 C12.4354054,2.34967181 11.7273359,2.28833977 10.9035521,2.28833977 C9.18376448,2.28833977 8.00635135,3.33810811 8.00635135,5.26592664 L8.00635135,6.92716216 L6.06127413,6.92716216 L6.06127413,9.17976834 L8.00635135,9.17976834 L8.00635135,14.9598649 L10.3325676,14.9598649 Z" fill="#FFFFFF"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>        </a>
+    </li>
+
+    <li>
+        <a href="https://www.reddit.com/submit?url=https://bitsofco.de/handling-broken-images-with-service-worker/" target="_blank" class="post__share__item">
+            <span class="sr-only">Post the Article to Reddit</span>
+            <svg width="18px" height="15px" viewBox="0 0 18 15">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g class="fill" transform="translate(-189.000000, -200.000000)" fill-rule="nonzero" fill="#3C3C3C">
+            <g transform="translate(126.000000, 127.000000)">
+                <g transform="translate(3.000000, 73.000000)">
+                    <g transform="translate(60.000000, 0.000000)">
+                        <path d="M12.8134583,8.16925 C12.8597083,8.2875 12.8807083,8.409625 12.8807083,8.53095833 C12.8807083,8.77520833 12.7963333,9.01245833 12.65475,9.206125 C12.51475,9.3975 12.316375,9.54604167 12.083,9.61141667 L12.0834167,9.61141667 C12.0814583,9.61220833 12.0795,9.61220833 12.0785417,9.61295833 C12.0775833,9.61295833 12.076,9.61375 12.07525,9.61375 C11.9659583,9.65108333 11.8539167,9.66858333 11.74275,9.66858333 C11.4821667,9.66858333 11.22625,9.57466667 11.0216667,9.41458333 C10.8186667,9.25516667 10.665,9.02608333 10.6167917,8.754375 L10.616375,8.754375 C10.616375,8.75358333 10.616375,8.752625 10.616,8.7515 C10.616,8.75070833 10.616,8.74991667 10.6152083,8.74879167 L10.616,8.74879167 C10.6008333,8.67875 10.5930417,8.60879167 10.5930417,8.53958333 C10.5930417,8.30429167 10.6731667,8.07833333 10.8054167,7.891625 C10.93725,7.70608333 11.1231667,7.55870833 11.34075,7.48283333 C11.3415417,7.48283333 11.3423333,7.48241667 11.3423333,7.48241667 C11.3434583,7.48241667 11.3434583,7.48129167 11.3444583,7.48129167 C11.4675417,7.43579167 11.5974583,7.413 11.726,7.413 C11.960125,7.413 12.19075,7.484 12.3852083,7.613875 C12.5773333,7.741625 12.7332917,7.92891667 12.8114583,8.1615 C12.81225,8.16304167 12.81225,8.16441667 12.813,8.16579167 C12.813,8.16733333 12.8137917,8.16816667 12.8145417,8.16929167 L12.8134583,8.16929167 L12.8134583,8.16925 Z M12.0970417,11.0562083 C12.0052917,10.9967083 11.8990833,10.96075 11.7867083,10.96075 C11.6960833,10.96075 11.6019583,10.986625 11.5181667,11.0422083 L11.5181667,11.0422083 C10.7263333,11.5147917 9.79504167,11.7737917 8.870375,11.7737917 C8.176625,11.7737917 7.48708333,11.627375 6.862375,11.3205 L6.85916667,11.3189583 L6.85604167,11.3177917 C6.76183333,11.2792917 6.6545,11.1974167 6.53741667,11.1194583 C6.47791667,11.0809167 6.41579167,11.042625 6.34683333,11.0144167 C6.27879167,10.9854583 6.20320833,10.9652083 6.12241667,10.9652083 C6.05554167,10.9652083 5.98525,10.9801667 5.915875,11.0116667 C5.91229167,11.0130417 5.908875,11.014375 5.905375,11.01575 L5.90575,11.01575 C5.79675,11.057375 5.71158333,11.133625 5.65683333,11.2238333 C5.59966667,11.31675 5.57158333,11.4249167 5.57158333,11.532625 C5.57158333,11.629875 5.59454167,11.7270833 5.64204167,11.815375 C5.68725,11.899 5.75679167,11.972125 5.84779167,12.021125 C6.74066667,12.623375 7.79204167,12.8962083 8.84745833,12.89525 C9.79904167,12.89525 10.756375,12.6749583 11.6087083,12.2739583 L11.6131667,12.27125 L11.6174583,12.2689167 C11.7298333,12.202375 11.8792083,12.1427083 12.02,12.0557917 C12.089625,12.0114583 12.1576667,11.960125 12.216,11.8934167 C12.2743333,11.827125 12.3212083,11.7454583 12.3476667,11.648625 L12.3476667,11.6482083 C12.35875,11.6054583 12.364,11.5638333 12.364,11.5222083 C12.364,11.4430833 12.3445417,11.368 12.3122917,11.3005417 C12.2650417,11.1989583 12.1876667,11.11575 12.0970417,11.0562083 Z M5.828125,9.607875 C5.82966667,9.607875 5.83170833,9.60845833 5.83345833,9.60941667 C5.94741667,9.65104167 6.064875,9.671625 6.18116667,9.671625 C6.47129167,9.671625 6.75325,9.55279167 6.96670833,9.359125 C7.17983333,9.164875 7.32579167,8.89008333 7.32579167,8.57683333 C7.32579167,8.56866667 7.32579167,8.5605 7.32541667,8.55079167 C7.32620833,8.53679167 7.32658333,8.52141667 7.32658333,8.50566667 C7.32658333,8.19491667 7.18258333,7.919 6.9715,7.72391667 C6.759625,7.52866667 6.47833333,7.40929167 6.187125,7.40929167 C6.10933333,7.40929167 6.03008333,7.41841667 5.952625,7.4365 C5.95145833,7.4365 5.95058333,7.436875 5.94941667,7.436875 L5.94825,7.436875 C5.56275,7.51758333 5.224375,7.80366667 5.0995,8.19720833 L5.0995,8.19720833 L5.0995,8.197625 C5.0995,8.19841667 5.099125,8.19916667 5.099125,8.19916667 C5.06325,8.30691667 5.04654167,8.418125 5.04654167,8.52816667 C5.04654167,8.76929167 5.12625,9.00425 5.26366667,9.1975 C5.399875,9.3875 5.59258333,9.536875 5.824,9.606625 C5.82566667,9.60670833 5.82645833,9.607125 5.828125,9.607875 Z M17.9180417,6.79558333 L17.9180417,6.79716667 C17.9207917,6.83633333 17.9215417,6.87541667 17.9215417,6.91425 C17.9215417,7.34954167 17.7819167,7.768125 17.549,8.12325 C17.3315833,8.45558333 17.03175,8.733625 16.686375,8.92229167 C16.7085417,9.09554167 16.721375,9.27016667 16.721375,9.44420833 C16.7209583,10.3815 16.3977917,11.3028333 15.8350417,12.04125 L15.8350417,12.041625 L15.833875,12.041625 C14.7935,13.425625 13.1958333,14.2417917 11.5825833,14.6534583 L11.5821667,14.6534583 L11.5810417,14.6544167 C10.72075,14.8632917 9.833625,14.97 8.94675,14.97 C7.62470833,14.97 6.30370833,14.7315833 5.071,14.2372917 L5.070625,14.236125 L5.06945833,14.236125 C3.79145833,13.7093333 2.57375,12.872 1.827,11.645125 C1.42525,10.9905417 1.20470833,10.2225833 1.20470833,9.451 C1.20470833,9.27641667 1.2165,9.10154167 1.23983333,8.92866667 C0.9035,8.73929167 0.612208333,8.47075 0.395875,8.15004167 C0.164958333,7.805625 0.0185416667,7.402125 4.16666666e-05,6.97558333 L4.16666666e-05,6.97391667 L4.16666666e-05,6.972375 L4.16666666e-05,6.96895833 C0.000416666667,6.37158333 0.259916667,5.80570833 0.663166667,5.38845833 C1.066375,4.97133333 1.61716667,4.69870833 2.20795833,4.69870833 L2.23245833,4.69870833 C2.29441667,4.6945 2.35691667,4.69208333 2.41945833,4.69208333 C2.71620833,4.69208333 3.013625,4.740125 3.29608333,4.84841667 L3.297625,4.84958333 L3.29920833,4.85008333 C3.54033333,4.951625 3.77991667,5.074125 3.99345833,5.24379167 C4.06266667,5.2075 4.138125,5.16666667 4.22279167,5.13441667 C5.517125,4.36795833 7.02158333,4.07229167 8.48770833,3.987 C8.50045833,3.26070833 8.58970833,2.50033333 8.94391667,1.83491667 C9.23891667,1.28204167 9.75095833,0.851625 10.3605833,0.702458333 L10.363125,0.701208333 L10.3664167,0.700833333 C10.598625,0.655916667 10.83275,0.635208333 11.0653333,0.635208333 C11.684875,0.635208333 12.2970417,0.781916667 12.8699167,1.01091667 C13.1235,0.628208333 13.4855833,0.3295 13.9103333,0.161958333 L13.9144167,0.159625 L13.9185,0.158083333 C14.1677917,0.0804166667 14.431125,0.035 14.6954167,0.035 C14.97425,0.035 15.2552917,0.0859583333 15.5185833,0.203583333 L15.5185833,0.202625 C15.5189583,0.203583333 15.519375,0.203583333 15.519375,0.203583333 C15.5213333,0.20425 15.522875,0.205416667 15.5242083,0.205416667 C15.9016667,0.350791667 16.2211667,0.619458333 16.4477083,0.953333333 C16.6744583,1.28866667 16.807875,1.69033333 16.807875,2.10329167 C16.807875,2.17941667 16.8035833,2.25566667 16.7946667,2.332 L16.793875,2.33354167 C16.793875,2.33470833 16.793875,2.336375 16.7934583,2.33754167 C16.7491667,2.87125 16.4788333,3.3395 16.096125,3.6735 C15.711125,4.00883333 15.2125,4.211375 14.7007083,4.211375 C14.618625,4.211375 14.5357917,4.20679167 14.4533333,4.19579167 C13.94575,4.157 13.4724583,3.911375 13.12475,3.546 C12.775875,3.18120833 12.5510833,2.69379167 12.5510833,2.16766667 C12.5510833,2.14220833 12.5534167,2.116125 12.5541667,2.090875 C12.0777083,1.87870833 11.57175,1.70270833 11.0689167,1.703125 C10.9961667,1.703125 10.9234583,1.707125 10.8507083,1.7145 L10.8499167,1.7145 C10.4734583,1.75079167 10.1234167,1.98808333 9.95383333,2.329375 L9.95383333,2.32975 L9.95383333,2.33091667 C9.696375,2.83233333 9.64504167,3.41845833 9.63725,4.00025 C11.0805417,4.094375 12.532375,4.44070833 13.8057083,5.17266667 L13.8076667,5.17266667 L13.8259167,5.18345833 C13.8500417,5.19775 13.89475,5.22225 13.9352083,5.24383333 C14.02275,5.17283333 14.1152917,5.09983333 14.220875,5.03691667 C14.606875,4.77983333 15.06425,4.652 15.5218333,4.652 C15.7248333,4.652 15.9280417,4.677875 16.1252083,4.72841667 L16.126,4.72841667 L16.1341667,4.73083333 C16.1370833,4.73125 16.1392083,4.73220833 16.1415833,4.73220833 L16.1415833,4.73258333 C16.6075417,4.851125 17.0290833,5.11870833 17.3464583,5.47954167 C17.663625,5.84095833 17.8769167,6.29820833 17.9185417,6.79458333 L17.9185417,6.795625 L17.9180417,6.795625 L17.9180417,6.79558333 Z M13.66675,2.07220833 C13.66675,2.09175 13.6671667,2.11179167 13.669125,2.13220833 L13.669125,2.133375 L13.669125,2.13570833 C13.6784583,2.38645833 13.7968333,2.61983333 13.97675,2.79220833 C14.1575833,2.96470833 14.3975833,3.07145833 14.641,3.07241667 L14.6443333,3.07241667 L14.647625,3.07241667 C14.665125,3.07379167 14.6830417,3.07379167 14.700125,3.07379167 C14.9459167,3.07416667 15.1897917,2.96829167 15.3729583,2.7965 C15.5565,2.62383333 15.6775,2.389 15.6872083,2.136125 L15.6875833,2.13495833 L15.6875833,2.13341667 C15.6891667,2.11408333 15.6899583,2.09579167 15.6899583,2.07604167 C15.6899583,1.81575 15.5682083,1.567625 15.377625,1.383875 C15.1878333,1.20029167 14.9322917,1.08654167 14.6803333,1.08720833 C14.5990417,1.08720833 14.5185,1.09829167 14.4395833,1.12279167 L14.436875,1.123 L14.4345417,1.12395833 C14.226875,1.17791667 14.0322083,1.30595833 13.892375,1.476 C13.7519167,1.64525 13.66675,1.8545 13.66675,2.07220833 Z M3.013,5.94075 C2.82008333,5.85091667 2.62058333,5.78675 2.42341667,5.78758333 C2.39033333,5.78758333 2.356875,5.78954167 2.32383333,5.793125 L2.31925,5.793125 L2.31466667,5.79370833 C2.03154167,5.8015 1.74579167,5.92495833 1.53129167,6.12283333 C1.316625,6.32 1.17466667,6.58625 1.16375,6.87979167 L1.16375,6.8825 L1.16325,6.88491667 C1.16133333,6.90866667 1.16054167,6.93229167 1.16054167,6.95504167 C1.16054167,7.13608333 1.21608333,7.31108333 1.31025,7.470375 C1.37995833,7.589 1.471375,7.69708333 1.57475,7.79125 C1.905625,7.06675 2.42258333,6.451875 3.013,5.94075 Z M15.5860833,9.48479167 C15.5860833,8.83895833 15.3530833,8.19025 14.9758333,7.66795833 C14.223625,6.62133333 13.056875,5.93870833 11.8430417,5.558125 L11.8345,5.555125 C11.6015,5.48366667 11.36625,5.420375 11.1289583,5.36620833 C10.4195833,5.20470833 9.69229167,5.12429167 8.96575,5.12429167 C7.99016667,5.12429167 7.014625,5.26866667 6.08054167,5.55675 C4.867,5.941875 3.69633333,6.61966667 2.94583333,7.66966667 L2.94583333,7.67045833 C2.56545833,8.19491667 2.34270833,8.84579167 2.34270833,9.49391667 C2.34270833,9.73254167 2.37254167,9.971125 2.435625,10.2032917 L2.43641667,10.2037083 C2.573,10.724875 2.840125,11.19 3.18595833,11.5950833 C3.53158333,12.001125 3.955625,12.3475 4.401625,12.6300417 C4.50041667,12.6912917 4.59958333,12.749625 4.70108333,12.8065833 C5.99666667,13.52975 7.4885,13.84675 8.969625,13.84675 C9.220125,13.84675 9.472125,13.8378333 9.721,13.8199167 C11.2125417,13.696625 12.71025,13.256375 13.921,12.3567917 L13.9214167,12.3558333 C14.3068333,12.0709583 14.6638333,11.7261667 14.9462083,11.3339583 C15.22975,10.9415417 15.4374167,10.5028333 15.529625,10.026375 L15.529625,10.025 L15.53,10.0245833 C15.5677917,9.84666667 15.5860833,9.66604167 15.5860833,9.48479167 Z M16.7633333,6.91458333 C16.7629583,6.75783333 16.7271667,6.60179167 16.648625,6.45625 L16.6466667,6.45441667 L16.645875,6.45208333 C16.5408333,6.23583333 16.3759167,6.0725 16.1772083,5.96116667 C15.9784583,5.84908333 15.745875,5.79216667 15.5125417,5.79216667 C15.3015833,5.79216667 15.0917083,5.83933333 14.9054583,5.93295833 C15.4977917,6.44729167 16.0174167,7.06541667 16.3532083,7.79279167 C16.4613333,7.69866667 16.5535417,7.58370833 16.6225417,7.45595833 C16.7124167,7.28833333 16.7633333,7.10020833 16.7633333,6.91458333 Z"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>        </a>
+    </li>
+</ul>
+        <!-- Begin MailChimp Signup Form -->
+<section id="mc_embed_signup" class="subscribe-form box">
+    <form action="//bitsofco.us10.list-manage.com/subscribe/post?u=282459d63a019df7bb8ca2e92&amp;id=7c802d4eab"
+          method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate"
+          target="_blank" novalidate>
+        <div id="mc_embed_signup_scroll">
+            <h2 class="h3 m-b-xsm">Subscribe to the Newsletter</h2>
+            <p class="subscribe-form__description m-b-md">Receive quality articles written by Ire Aderinokun, frontend developer and user interface designer.</p>
+
+            <picture class="subscribe-form__image">
+                <source type="image/webp" srcset="https://bitsofco.de/assets/images/profile.webp?v=2d326f68e4">
+                <source type="image/png" srcset="https://bitsofco.de/assets/images/profile.png?v=2d326f68e4">
+                <img src="https://bitsofco.de/assets/images/profile.png?v=2d326f68e4" alt="Cartoon Profile of Me, Ire">
+            </picture>
+
+            <div class="subscribe-form__fields">
+
+
+                <div class="subscribe-form__field subscribe-form__field--input mc-field-group">
+                    <label for="mce-EMAIL" class="sr-only">Email Address </label>
+                    <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address*">
+                </div>
+                <div class="subscribe-form__field subscribe-form__field--input mc-field-group">
+                    <label for="mce-FNAME" class="sr-only">First Name </label>
+                    <input type="text" value="" name="FNAME" class="" id="mce-FNAME" placeholder="First Name">
+                </div>
+
+                <div class="subscribe-form__field subscribe-form__field--submit clear">
+                    <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
+                </div>
+
+                <div id="mce-responses" class="clear">
+                    <div class="response" id="mce-error-response" style="display:none"></div>
+                    <div class="response" id="mce-success-response" style="display:none"></div>
+                </div>
+                <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+                <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="hidden" name="b_282459d63a019df7bb8ca2e92_7c802d4eab" tabindex="-1" value=""></div>
+            </div>
+        </div>
+    </form>
+</section>
+<!--End mc_embed_signup-->
+        <section class="post__suggestions m-b-md">
+    <h2 class="sr-only">More Posts</h2>
+
+    <article class="post__suggestion">
+        <h3 class="h3 no-ul">
+            <a href="/a-one-line-solution-to-highlighting-search-matches/">
+                <span>&#8592;</span><br>
+                A one-line solution to highlighting search matches
+            </a>
+        </h3>
+        <p class="post__meta"><em><a href="/tag/javascript/">javascript</a></em></p>
+    </article>
+
+        <article class="post__suggestion">
+            <h3 class="h3 no-ul">
+                <a href="/making-abbr-work-for-touchscreen-keyboard-mouse/">
+                    <span>&#8594;</span><br>
+                    Making the abbr element work for touchscreen, keyboard, and mouse
+                </a>
+            </h3>
+            <p class="post__meta"><em><a href="/tag/css/">css</a>, <a href="/tag/html/">html</a>, <a href="/tag/accessibility/">accessibility</a></em></p>
+        </article>
+
+</section>    </footer>
+
+    <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_shortname = 'bitsofcode';
+
+    var disqus_identifier = '/handling-broken-images-with-service-worker/';
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        if (window.location.host !== "bitsofco.de") return;
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+</article>
+
+<script src="https://bitsofco.de/assets/built/post.js?v=2d326f68e4" class="versionedAsset"></script>
+<script>!function (d, s, id) {var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https';
+if (!d.getElementById(id)) {js = d.createElement(s);js.id = id;js.src = p + '://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js, fjs);}}(document, 'script', 'twitter-wjs');</script>
+</main>
+        <aside class="site__sidebar">
+    <div class="box p-a-sm m-b-md">
+        <p class="m-b-sm"><strong>bitsofcode</strong>. Articles on frontend development and more.</p> 
+        <p>All articles are written by <a href="https://ireaderinokun.com">Ire Aderinokun</a>, frontend developer and user interface designer.</p><br>
+        <p><a href="https://twitter.com/ireaderinokun" class="twitter-follow-button" data-show-count="true">Follow @ireaderinokun</a></p>
+    </div>
+
+    <div class="ad p-a-sm m-b-md no-ul">
+<script>
+    (function() {
+        if (window.location.host !== "bitsofco.de") return;
+        
+        var carbonadsScript = document.createElement('script'); 
+        carbonadsScript.type = 'text/javascript'; 
+        carbonadsScript.async = true;
+        carbonadsScript.src = '//cdn.carbonads.com/carbon.js?zoneid=1673&serve=C6AILKT&placement=bitsofcode';
+        carbonadsScript.id = '_carbonads_js';
+
+        var adBox = document.getElementsByClassName('ad')[0];
+        adBox.classList.add('box');
+        adBox.appendChild(carbonadsScript)
+    })();
+</script>
+</div>
+    <div class="social">
+        <ul>
+            <li>
+                <a href="https://bitsofco.de/rss" target="_blank" rel="noopener">
+                    <span class="sr-only">RSS Feed</span>
+                    <svg  viewBox="0 0 75 75">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M25.922,61.664 C25.922,68.617 20.285,74.25 13.336,74.25 C6.383,74.25 0.75,68.617 0.75,61.664 C0.75,54.715 6.383,49.078 13.336,49.078 C20.285,49.078 25.922,54.715 25.922,61.664 Z M67.957,74.25 C64.48,74.25 61.664,71.434 61.664,67.957 C61.664,34.258 40.73,13.336 7.043,13.336 C3.566,13.336 0.75,10.52 0.75,7.043 C0.75,3.566 3.566,0.75 7.043,0.75 C26.941,0.75 43.793,7.109 55.852,19.148 C67.914,31.184 74.25,48.066 74.25,67.957 C74.25,69.625 73.586,71.227 72.406,72.406 C71.227,73.586 69.625,74.25 67.957,74.25 Z M44.137,74.25 C40.66,74.25 37.844,71.434 37.844,67.957 C37.844,47.52 27.48,37.156 7.043,37.156 C3.566,37.156 0.75,34.34 0.75,30.863 C0.75,27.387 3.566,24.57 7.043,24.57 C34.613,24.57 50.43,40.379 50.43,67.949 C50.434,69.621 49.77,71.223 48.59,72.402 C47.41,73.586 45.809,74.25 44.137,74.25 Z" fill="#3C3C3C"></path>
+    </g>
+</svg>                </a>
+            </li>
+            <li>
+                <a href="https://twitter.com/botsofcode" target="_blank" rel="noopener">
+                    <span class="sr-only">Twitter</span>
+                    <svg width="19px" height="15px" viewBox="0 0 19 15">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g class="fill" fill-rule="nonzero" fill="#3C3C3C">
+            <path d="M18.9999991,1.77490775 C18.3009891,2.07601476 17.5496341,2.27942804 16.7612291,2.37094096 C17.5658791,1.90249077 18.1840441,1.16070111 18.4751241,0.276752768 C17.7218691,0.710608856 16.8876741,1.02555351 15.9997091,1.1952952 C15.2887291,0.459594096 14.2756491,0 13.1544591,0 C11.0017591,0 9.25634305,1.6947417 9.25634305,3.7851476 C9.25634305,4.08182657 9.29080905,4.37075646 9.35728055,4.64778598 C6.11762855,4.48994465 3.24528455,2.98293358 1.32276005,0.692804428 C0.98718205,1.25184502 0.7949562,1.90212177 0.7949562,2.59584871 C0.7949562,3.90913284 1.48311055,5.06771218 2.52911755,5.74649446 C1.89012855,5.72684502 1.28903505,5.55654982 0.7635245,5.27306273 C0.763154,5.28883764 0.763154,5.30461255 0.763154,5.32066421 C0.763154,7.15464022 2.1068435,8.68445572 3.8900315,9.03230627 C3.5629845,9.11879151 3.2186095,9.16510148 2.8631005,9.16510148 C2.611911,9.16510148 2.367723,9.14131919 2.129672,9.0971679 C2.6257145,10.6009317 4.065297,11.6954059 5.77106,11.725821 C4.4369845,12.7411531 2.7562255,13.3463007 0.9298866,13.3463007 C0.61523615,13.3463007 0.30492815,13.328321 0,13.2933672 C1.725067,14.3673303 3.774065,14.9940959 5.975386,14.9940959 C13.14534,14.9940959 17.066275,9.22621771 17.066275,4.22407749 C17.066275,4.0599631 17.06238,3.89677122 17.054875,3.73440959 C17.8165841,3.20064576 18.4774041,2.53404059 18.9999991,1.77490775"></path>
+        </g>
+    </g>
+</svg>                </a>
+            </li>
+            <li>
+                <a href="https://www.facebook.com/bitsofcodeblog" target="_blank" rel="noopener">
+                    <span class="sr-only">Facebook</span>
+                    <svg width="15px" height="15px" viewBox="0 0 15 15">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(-162.000000, -200.000000)" fill-rule="nonzero">
+            <g transform="translate(126.000000, 127.000000)">
+                <g transform="translate(3.000000, 73.000000)">
+                    <g transform="translate(33.000000, 0.000000)">
+                        <path d="M14.1360232,14.9598649 C14.590888,14.9598649 14.959749,14.5910039 14.959749,14.1360232 L14.959749,0.857837838 C14.959749,0.402799228 14.5909459,0.0340540541 14.1360232,0.0340540541 L0.857837838,0.0340540541 C0.402799228,0.0340540541 0.0340540541,0.402799228 0.0340540541,0.857837838 L0.0340540541,14.1360232 C0.0340540541,14.5909459 0.402741313,14.9598649 0.857837838,14.9598649 L14.1360232,14.9598649 Z" class="fill" fill="#3C3C3C"></path>
+                        <path d="M10.3325676,14.9598649 L10.3325676,9.17976834 L12.2726641,9.17976834 L12.563166,6.92716216 L10.3325676,6.92716216 L10.3325676,5.48901544 C10.3325676,4.83683398 10.513668,4.39239382 11.4488803,4.39239382 L12.6416988,4.39187259 L12.6416988,2.37712355 C12.4354054,2.34967181 11.7273359,2.28833977 10.9035521,2.28833977 C9.18376448,2.28833977 8.00635135,3.33810811 8.00635135,5.26592664 L8.00635135,6.92716216 L6.06127413,6.92716216 L6.06127413,9.17976834 L8.00635135,9.17976834 L8.00635135,14.9598649 L10.3325676,14.9598649 Z" fill="#FFFFFF"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>                </a>
+            </li>
+            <li>
+                <a href="https://www.youtube.com/c/bitsofcode" target="_blank" rel="noopener">
+                    <span class="sr-only">YouTube</span>
+                    <svg viewBox="0 0 36 25">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g>
+            <polyline fill="#FFFFFF" points="14.0898818 17.1168637 23.6865438 12.1446801 14.0898818 7.13772601 14.0898818 17.1168637"></polyline>
+            <polyline fill="#DEDED9" points="22.5058067 12.7575104 22.5049026 12.7569193 23.6865438 12.1446801 22.5058067 12.7575104"></polyline>
+            <mask id="youtube-mask-1" fill="white">
+                <polygon points="0.00208623088 24.9979138 0.00208623088 0.0200625869 35.5163421 0.0200625869 35.5163421 24.9979138"></polygon>
+            </mask>
+            <polyline fill="#DEDED9" mask="url(#youtube-mask-1)" points="22.5049026 12.7569193 14.0898818 7.13772601 23.6865438 12.1446801 22.5049026 12.7569193"></polyline>
+            <path d="M14.091516,17.1168637 L14.0898818,7.13772601 L23.6865438,12.1446801 L14.091516,17.1168637 Z M35.1616829,5.40897079 C35.1616829,5.40897079 34.8146732,2.96150904 33.7497218,1.8837274 C32.3991655,0.469158554 30.8853268,0.46213491 30.1910987,0.379346314 C25.2211057,0.0200625869 17.7658554,0.0200625869 17.7658554,0.0200625869 L17.7504172,0.0200625869 C17.7504172,0.0200625869 10.2953408,0.0200625869 5.32517385,0.379346314 C4.63091099,0.46213491 3.11762865,0.469158554 1.76658554,1.8837274 C0.701703755,2.96150904 0.355180807,5.40897079 0.355180807,5.40897079 C0.355180807,5.40897079 0,8.28310153 0,11.1571975 L0,13.851669 C0,16.7257302 0.355180807,19.5998261 0.355180807,19.5998261 C0.355180807,19.5998261 0.701703755,22.0473227 1.76658554,23.1251043 C3.11762865,24.5397079 4.89231572,24.4949583 5.68275382,24.6432197 C8.52409597,24.9156815 17.7581711,25 17.7581711,25 C17.7581711,25 25.2211057,24.9887691 30.1910987,24.6295202 C30.8853268,24.5466968 32.3991655,24.5397079 33.7497218,23.1251043 C34.8146732,22.0473227 35.1616829,19.5998261 35.1616829,19.5998261 C35.1616829,19.5998261 35.5163421,16.7257302 35.5163421,13.851669 L35.5163421,11.1571975 C35.5163421,8.28310153 35.1616829,5.40897079 35.1616829,5.40897079 L35.1616829,5.40897079 Z" class="fill" fill="#3C3C3C" mask="url(#youtube-mask-1)"></path>
+        </g>
+    </g>
+</svg>                </a>
+            </li>
+        </ul>
+    </div>
+</aside>
+    </div>
+</div>
+
+<footer class="site__footer p-t-md p-b-md">
+    <div class="wrapper">
+        <p class="fs-i m-b-sm">All articles written with ❤ by <a href="https://www.ireaderinokun.com/">Ire Aderinokun</a></p>
+        <nav id="site__footer__nav" class="site__footer__nav m-b-sm no-ul"><ul class="nav">
+    <li class="nav-home"><a href="https://bitsofco.de/">Home</a></li>
+    <li class="nav-your-saved-articles"><a href="https://bitsofco.de/saved/">Your Saved Articles</a></li>
+    <li class="nav-subscribe"><a href="https://bitsofco.de/subscribe/">Subscribe</a></li>
+    <li class="nav-other-writing"><a href="https://bitsofco.de/other-writing/">Other Writing</a></li>
+</ul>
+</nav>
+    </div>
+</footer>
+
+<div class="dialog-overlay" aria-hidden="true"></div>
+
+<script src="https://bitsofco.de/assets/built/global.js?v=2d326f68e4" class="versionedAsset"></script>
+<script src="https://cdn.jsdelivr.net/gh/ireade/caniuse-embed/public/caniuse-embed.min.js"></script>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<script async src="https://production-assets.codepen.io/assets/embed/ei.js"></script>
+</body>
+</html>
